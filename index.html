@@ -22,6 +22,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
         .app-container {
@@ -32,14 +33,21 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             padding: 25px;
             box-sizing: border-box;
+            margin-bottom: 20px;
         }
 
         h2 { margin-top: 0; color: var(--primary); text-align: center; font-size: 22px; }
 
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
         .input-group { margin-bottom: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #555; }
         
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], input[type="time"] {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -47,19 +55,27 @@
             font-size: 16px;
             box-sizing: border-box;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
         input:focus { border-color: var(--primary); outline: none; }
 
         /* Custom Checkbox Design */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
         .checkbox-wrapper {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
             padding: 10px;
             background: #f8f9fa;
             border-radius: 8px;
             cursor: pointer;
+            transition: background 0.2s;
         }
+        .checkbox-wrapper:hover { background: #eee; }
         .checkbox-wrapper input { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary); }
         .checkbox-wrapper span { font-size: 15px; font-weight: 500; }
 
@@ -73,10 +89,19 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             box-shadow: 0 4px 10px rgba(0,137,123, 0.3);
         }
         .btn-print:active { transform: scale(0.98); }
+
+        /* Footer Style */
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #888;
+            font-weight: 500;
+        }
 
         /* PREVIEW AREA (Screen) */
         .preview-box {
@@ -94,10 +119,9 @@
             position: relative;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             overflow: hidden;
-            /* Flex layout to mirror print */
             display: flex;
             flex-direction: column;
-            padding: 2mm;
+            padding: 1mm 2mm 3mm 2mm;
             box-sizing: border-box;
             text-align: left;
         }
@@ -105,7 +129,7 @@
         /* --- PRINT STYLES (The Engine) --- */
         @media print {
             @page {
-                size: 50mm 25mm landscape; /* Attempt to force landscape */
+                size: 50mm 25mm landscape;
                 margin: 0;
             }
             body { 
@@ -113,7 +137,7 @@
                 margin: 0; padding: 0; 
                 display: block;
             }
-            .app-container { display: none; } /* Hide UI */
+            .app-container { display: none; } /* Hide UI & Footer */
             
             #print-queue {
                 display: block !important;
@@ -122,36 +146,35 @@
             .print-sticker {
                 width: 50mm;
                 height: 25mm;
-                page-break-after: always; /* Forces next label to new sticker */
+                page-break-after: always;
                 break-after: page;
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
-                padding: 1mm 2mm;
+                padding: 1mm 2mm 3mm 2mm; /* Adjusted padding */
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
             }
 
-            /* Rotation Fix Class - toggled via JS if needed */
+            /* Rotation Fix Class */
             .force-rotate {
                 transform: rotate(90deg);
                 transform-origin: center;
-                width: 25mm; /* Swap dimensions if rotating */
+                width: 25mm;
                 height: 50mm;
                 position: absolute;
-                top: -12.5mm; /* Adjust offsets to center rotation */
+                top: -12.5mm;
                 left: 12.5mm;
             }
         }
 
-        /* Common Label Typography (Used in Preview and Print) */
-        .lbl-name { font-size: 16pt; font-weight: 900; line-height: 1.1; color: #000; white-space: nowrap; overflow: hidden; }
-        .lbl-reg { font-size: 11pt; font-weight: bold; margin-top: 1mm; }
+        /* --- Final Label Typography --- */
+        .lbl-name { font-size: 14pt; font-weight: 900; line-height: 1.1; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lbl-reg { font-size: 10pt; font-weight: bold; margin-top: 1mm; }
         .lbl-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
-        .lbl-meta { font-size: 8pt; font-family: monospace; }
-        .lbl-ward { font-size: 10pt; font-weight: bold; border: 1px solid #000; padding: 0 3px; }
-        .lbl-test { font-size: 9pt; font-weight: bold; margin-top: 1mm; font-style: italic; }
+        .lbl-meta { font-size: 8pt; font-family: monospace; font-weight: 600; }
+        .lbl-ward { font-size: 9pt; font-weight: bold; border: 1px solid #000; padding: 1px 4px; white-space: nowrap; }
+        .lbl-test { font-size: 9pt; font-weight: bold; margin-top: 1mm; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
     </style>
 </head>
@@ -162,63 +185,72 @@
 
         <div class="input-group">
             <label>Patient Name</label>
-            <input type="text" id="pName" placeholder="e.g. Mrs. Izzadeen" oninput="updateState()">
+            <input type="text" id="pName" placeholder="e.g. Mrs. B.B.M. Izzadeen" oninput="updateState()">
         </div>
 
         <div class="input-group">
             <label>Registration No (BHT)</label>
-            <input type="text" id="pReg" placeholder="e.g. 250724304" oninput="updateState()">
+            <input type="text" id="pReg" placeholder="e.g. 9962254879" oninput="updateState()">
         </div>
 
-        <div class="checkbox-wrapper" onclick="toggleCheckbox('chkWard')">
-            <input type="checkbox" id="chkWard" onchange="updateState()">
-            <span>Include "Ward 4C"</span>
-        </div>
-
-        <div class="checkbox-wrapper" onclick="toggleCheckbox('chkTest')">
-            <input type="checkbox" id="chkTest" onchange="toggleTestField()">
-            <span>Include Test Name</span>
-        </div>
-        
-        <div class="input-group" id="testFieldGroup" style="display:none;">
-            <input type="text" id="pTest" placeholder="Enter Test Name (e.g. FBC)" oninput="updateState()">
-        </div>
-
-        <div class="input-group" style="display: flex; gap: 10px; align-items: flex-end;">
-            <div style="flex: 1;">
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Time</label>
+                <input type="time" id="pTime" oninput="updateState()">
+            </div>
+             <div class="input-group">
                 <label>Copies</label>
                 <input type="number" id="pCopies" value="1" min="1" max="50">
             </div>
-            <div style="flex: 1;">
-                 <label style="font-size: 11px; color: #d63031;">Prints Sideways?</label>
-                <div class="checkbox-wrapper" style="padding: 5px; margin: 0; background: #ffeaea;">
-                    <input type="checkbox" id="chkRotate">
-                    <span style="font-size: 12px;">Fix Rotation</span>
-                </div>
+        </div>
+
+        <div class="checkbox-group">
+            <div class="checkbox-wrapper" onclick="toggleCheckbox('chkWard')">
+                <input type="checkbox" id="chkWard" onchange="updateState()">
+                <span>Include "Ward 4C"</span>
             </div>
+
+            <div class="checkbox-wrapper" onclick="toggleCheckbox('chkTest')">
+                <input type="checkbox" id="chkTest" onchange="toggleTestField()">
+                <span>Include Test Name</span>
+            </div>
+        </div>
+        
+        <div class="input-group" id="testFieldGroup" style="display:none;">
+            <input type="text" id="pTest" placeholder="Enter Test Name (e.g. HIV HEP B)" oninput="updateState()">
+        </div>
+
+        <div class="checkbox-wrapper" style="background: #ffeaea; border: 1px solid #ffcccc;" onclick="toggleCheckbox('chkRotate')">
+            <input type="checkbox" id="chkRotate">
+            <span style="color: #d63031; font-weight: 600;">Fix Rotation (If printing sideways)</span>
         </div>
 
         <button class="btn-print" onclick="preparePrint()">PRINT LABELS</button>
 
         <div class="preview-box">
-            <label>Preview</label>
+            <label style="margin-bottom: 10px;">Live Preview</label>
             <div class="preview-label" id="previewCanvas">
                 </div>
+        </div>
+
+        <div class="footer">
+            Made with 🤍 by Keeth
         </div>
     </div>
 
     <div id="print-queue" style="display:none;"></div>
 
     <script>
-        // Set Default Date
+        // Set Default Date and Time
         const now = new Date();
         const dateStr = now.getDate().toString().padStart(2, '0') + '/' + (now.getMonth()+1).toString().padStart(2, '0');
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('pTime').value = timeStr;
         
         // Helper to toggle checkbox by clicking the div
         function toggleCheckbox(id) {
             const el = document.getElementById(id);
-            // prevent double toggle if clicking actual box
-            if (event.target !== el) {
+            if (event.target !== el && event.target.tagName !== 'INPUT') {
                 el.checked = !el.checked;
                 if(id === 'chkTest') toggleTestField();
                 updateState();
@@ -232,8 +264,7 @@
         }
 
         // Generate the HTML for a single label
-        function getLabelHTML(name, reg, ward, test, isRotate) {
-            const rotateClass = isRotate ? 'force-rotate' : '';
+        function getLabelHTML(name, reg, ward, test, time, isRotate) {
             
             let html = `
                 <div class="lbl-name">${name || 'Patient Name'}</div>
@@ -245,7 +276,7 @@
             }
 
             html += `<div class="lbl-row">
-                        <div class="lbl-meta">${dateStr}</div>`;
+                        <div class="lbl-meta">${dateStr} &nbsp;${time}</div>`;
             
             if (ward) {
                 html += `<div class="lbl-ward">Ward 4C</div>`;
@@ -258,18 +289,20 @@
         function updateState() {
             const name = document.getElementById('pName').value;
             const reg = document.getElementById('pReg').value;
+            const time = document.getElementById('pTime').value;
             const showWard = document.getElementById('chkWard').checked;
             const showTest = document.getElementById('chkTest').checked;
             const testName = showTest ? document.getElementById('pTest').value : null;
 
             // Update Preview
             const canvas = document.getElementById('previewCanvas');
-            canvas.innerHTML = getLabelHTML(name, reg, showWard, testName, false);
+            canvas.innerHTML = getLabelHTML(name, reg, showWard, testName, time, false);
         }
 
         function preparePrint() {
             const name = document.getElementById('pName').value;
             const reg = document.getElementById('pReg').value;
+            const time = document.getElementById('pTime').value;
             const showWard = document.getElementById('chkWard').checked;
             const showTest = document.getElementById('chkTest').checked;
             const testName = showTest ? document.getElementById('pTest').value : null;
@@ -284,7 +317,7 @@
                 const sticker = document.createElement('div');
                 sticker.className = 'print-sticker';
                 if (needsRotation) sticker.classList.add('force-rotate');
-                sticker.innerHTML = getLabelHTML(name, reg, showWard, testName, needsRotation);
+                sticker.innerHTML = getLabelHTML(name, reg, showWard, testName, time, needsRotation);
                 queue.appendChild(sticker);
             }
 
