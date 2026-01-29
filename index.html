@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Label Printer 50x25</title>
+    <style>
+        /* WEB FORM STYLING (Screen only) */
+        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+        .no-print { 
+            background: white; padding: 20px; border-radius: 8px; 
+            width: 300px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        input { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
+        label { font-weight: bold; font-size: 14px; }
+        button { 
+            width: 100%; padding: 12px; background: #007bff; color: white; 
+            border: none; font-size: 16px; cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+
+        /* LABEL PREVIEW (Screen) */
+        #preview-container {
+            margin: 20px auto; width: 50mm; height: 25mm; 
+            background: white; border: 1px dashed black; padding: 1mm;
+        }
+
+        /* PRINT STYLING (The magic part) */
+        @media print {
+            @page {
+                size: 50mm 25mm;  /* Forces browser to recognize size */
+                margin: 0;        /* Removes headers/footers */
+            }
+            body { margin: 0; padding: 0; background: white; }
+            .no-print { display: none; } /* Hides the form */
+            
+            #label-area {
+                position: absolute;
+                top: 0; left: 0;
+                width: 48mm;      /* slightly less than 50mm to prevent spillover */
+                height: 25mm;
+                font-family: Arial, Helvetica, sans-serif;
+                font-weight: bold;
+                font-size: 11px;  /* Adjusted for readability */
+                line-height: 1.3;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                padding-left: 2mm; /* Small left margin */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print">
+        <h2>Label Details</h2>
+        
+        <label>Name:</label>
+        <input type="text" id="pName" placeholder="Patient Name" oninput="updateLabel()">
+        
+        <label>REG No:</label>
+        <input type="text" id="pReg" placeholder="Registration No" oninput="updateLabel()">
+        
+        <label>Date:</label>
+        <input type="text" id="pDate" oninput="updateLabel()">
+        
+        <label>Time:</label>
+        <input type="text" id="pTime" oninput="updateLabel()">
+
+        <button onclick="window.print()">PRINT LABEL</button>
+
+        <div style="margin-top:20px; font-size: 12px; color: #666;">
+            Preview (approximate):
+        </div>
+        <div id="preview-container">
+            <div style="font-size: 10px; font-weight: bold; font-family: Arial;">
+                <div id="prevName">Mrs. Name Here</div>
+                <div id="prevReg">Reg: 123456789</div>
+                <div style="display: flex; justify-content: space-between; width: 45mm; margin-top:2px;">
+                    <span id="prevDate">29/01</span>
+                    <span id="prevTime">10:30</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="label-area" style="display:none;">
+        <div id="outName">Mrs. Name Here</div>
+        <div id="outReg">Reg: 123456789</div>
+        <div style="margin-top: 3px;">
+            <span id="outDate">29/01</span>
+            <span style="float: right; margin-right: 4mm;" id="outTime">10:30</span>
+        </div>
+    </div>
+
+    <script>
+        // Auto-fill Date and Time
+        const now = new Date();
+        const dateStr = now.getDate().toString().padStart(2, '0') + '/' + (now.getMonth()+1).toString().padStart(2, '0');
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        
+        document.getElementById('pDate').value = dateStr;
+        document.getElementById('pTime').value = timeStr;
+
+        // Sync inputs to print area
+        function updateLabel() {
+            // Update Print Area
+            document.getElementById('outName').innerText = document.getElementById('pName').value;
+            document.getElementById('outReg').innerText = "Reg: " + document.getElementById('pReg').value;
+            document.getElementById('outDate').innerText = document.getElementById('pDate').value;
+            document.getElementById('outTime').innerText = document.getElementById('pTime').value;
+
+            // Update Preview Area
+            document.getElementById('prevName').innerText = document.getElementById('pName').value;
+            document.getElementById('prevReg').innerText = "Reg: " + document.getElementById('pReg').value;
+            document.getElementById('prevDate').innerText = document.getElementById('pDate').value;
+            document.getElementById('prevTime').innerText = document.getElementById('pTime').value;
+        }
+
+        // Make the print area visible only when printing
+        window.onbeforeprint = function() {
+            document.getElementById('label-area').style.display = 'block';
+        };
+        window.onafterprint = function() {
+            document.getElementById('label-area').style.display = 'none';
+        };
+
+        updateLabel();
+    </script>
+</body>
+</html>
