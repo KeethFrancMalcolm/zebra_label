@@ -59,6 +59,28 @@
         }
         input:focus { border-color: var(--primary); outline: none; }
 
+        /* Time Controls */
+        .time-controls {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            justify-content: space-between;
+        }
+        .time-btn {
+            flex: 1;
+            padding: 8px 0;
+            background: #e0f2f1;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .time-btn:hover { background: var(--primary); color: white; }
+        .time-btn.now { background: var(--primary); color: white; }
+
         /* Custom Checkbox Design */
         .checkbox-group {
             display: flex;
@@ -151,7 +173,7 @@
                 position: relative;
                 overflow: hidden;
                 box-sizing: border-box;
-                padding: 1mm 2mm 3mm 2mm; /* Adjusted padding */
+                padding: 1mm 2mm 3mm 2mm;
                 display: flex;
                 flex-direction: column;
             }
@@ -197,6 +219,12 @@
             <div class="input-group">
                 <label>Time</label>
                 <input type="time" id="pTime" oninput="updateState()">
+                <div class="time-controls">
+                    <button class="time-btn" onclick="adjustTime(-60)">-1h</button>
+                    <button class="time-btn" onclick="adjustTime(-5)">-5m</button>
+                    <button class="time-btn now" onclick="setNow()">NOW</button>
+                    <button class="time-btn" onclick="adjustTime(5)">+5m</button>
+                </div>
             </div>
              <div class="input-group">
                 <label>Copies</label>
@@ -241,16 +269,42 @@
     <div id="print-queue" style="display:none;"></div>
 
     <script>
-        // Set Default Date and Time
+        // --- TIME FUNCTIONS ---
+        function setNow() {
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('pTime').value = timeStr;
+            updateState();
+        }
+
+        function adjustTime(minutes) {
+            const timeInput = document.getElementById('pTime');
+            if(!timeInput.value) {
+                setNow();
+                return;
+            }
+            
+            // Parse current value
+            const [h, m] = timeInput.value.split(':').map(Number);
+            const date = new Date();
+            date.setHours(h);
+            date.setMinutes(m + minutes); // Add/Subtract minutes
+
+            // Format back to HH:MM
+            const newTimeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+            timeInput.value = newTimeStr;
+            updateState();
+        }
+
+        // Initialize Time on Load
         const now = new Date();
         const dateStr = now.getDate().toString().padStart(2, '0') + '/' + (now.getMonth()+1).toString().padStart(2, '0');
-        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        document.getElementById('pTime').value = timeStr;
-        
-        // Helper to toggle checkbox by clicking the div
+        setNow();
+
+        // --- UI FUNCTIONS ---
         function toggleCheckbox(id) {
             const el = document.getElementById(id);
-            if (event.target !== el && event.target.tagName !== 'INPUT') {
+            if (event.target !== el && event.target.tagName !== 'INPUT' && event.target.tagName !== 'BUTTON') {
                 el.checked = !el.checked;
                 if(id === 'chkTest') toggleTestField();
                 updateState();
@@ -263,9 +317,7 @@
             updateState();
         }
 
-        // Generate the HTML for a single label
         function getLabelHTML(name, reg, ward, test, time, isRotate) {
-            
             let html = `
                 <div class="lbl-name">${name || 'Patient Name'}</div>
                 <div class="lbl-reg">Reg: ${reg || '---'}</div>
@@ -310,9 +362,8 @@
             const needsRotation = document.getElementById('chkRotate').checked;
 
             const queue = document.getElementById('print-queue');
-            queue.innerHTML = ''; // Clear previous
+            queue.innerHTML = ''; 
 
-            // Create N copies of the label
             for (let i = 0; i < copies; i++) {
                 const sticker = document.createElement('div');
                 sticker.className = 'print-sticker';
