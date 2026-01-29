@@ -2,130 +2,297 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Label Printer 50x25</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediLabel Pro</title>
     <style>
-        /* WEB FORM STYLING (Screen only) */
-        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-        .no-print { 
-            background: white; padding: 20px; border-radius: 8px; 
-            width: 300px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        input { width: 100%; padding: 8px; margin: 5px 0 15px 0; box-sizing: border-box; }
-        label { font-weight: bold; font-size: 14px; }
-        button { 
-            width: 100%; padding: 12px; background: #007bff; color: white; 
-            border: none; font-size: 16px; cursor: pointer; 
-        }
-        button:hover { background: #0056b3; }
-
-        /* LABEL PREVIEW (Screen) */
-        #preview-container {
-            margin: 20px auto; width: 50mm; height: 25mm; 
-            background: white; border: 1px dashed black; padding: 1mm;
+        :root {
+            --primary: #00897b; /* Professional Teal */
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #2d3436;
         }
 
-        /* PRINT STYLING (The magic part) */
+        /* --- UI STYLES (Screen Only) --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .app-container {
+            max-width: 400px;
+            width: 100%;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 25px;
+            box-sizing: border-box;
+        }
+
+        h2 { margin-top: 0; color: var(--primary); text-align: center; font-size: 22px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #555; }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        /* Custom Checkbox Design */
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .checkbox-wrapper input { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary); }
+        .checkbox-wrapper span { font-size: 15px; font-weight: 500; }
+
+        .btn-print {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(0,137,123, 0.3);
+        }
+        .btn-print:active { transform: scale(0.98); }
+
+        /* PREVIEW AREA (Screen) */
+        .preview-box {
+            margin-top: 25px;
+            border-top: 2px dashed #eee;
+            padding-top: 20px;
+            text-align: center;
+        }
+        .preview-label {
+            width: 50mm;
+            height: 25mm;
+            background: white;
+            border: 1px solid #333;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            /* Flex layout to mirror print */
+            display: flex;
+            flex-direction: column;
+            padding: 2mm;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        /* --- PRINT STYLES (The Engine) --- */
         @media print {
             @page {
-                size: 50mm 25mm;  /* Forces browser to recognize size */
-                margin: 0;        /* Removes headers/footers */
+                size: 50mm 25mm landscape; /* Attempt to force landscape */
+                margin: 0;
             }
-            body { margin: 0; padding: 0; background: white; }
-            .no-print { display: none; } /* Hides the form */
+            body { 
+                background: white; 
+                margin: 0; padding: 0; 
+                display: block;
+            }
+            .app-container { display: none; } /* Hide UI */
             
-            #label-area {
-                position: absolute;
-                top: 0; left: 0;
-                width: 48mm;      /* slightly less than 50mm to prevent spillover */
+            #print-queue {
+                display: block !important;
+            }
+
+            .print-sticker {
+                width: 50mm;
                 height: 25mm;
-                font-family: Arial, Helvetica, sans-serif;
-                font-weight: bold;
-                font-size: 11px;  /* Adjusted for readability */
-                line-height: 1.3;
+                page-break-after: always; /* Forces next label to new sticker */
+                break-after: page;
+                position: relative;
+                overflow: hidden;
+                box-sizing: border-box;
+                padding: 1mm 2mm;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-                padding-left: 2mm; /* Small left margin */
+            }
+
+            /* Rotation Fix Class - toggled via JS if needed */
+            .force-rotate {
+                transform: rotate(90deg);
+                transform-origin: center;
+                width: 25mm; /* Swap dimensions if rotating */
+                height: 50mm;
+                position: absolute;
+                top: -12.5mm; /* Adjust offsets to center rotation */
+                left: 12.5mm;
             }
         }
+
+        /* Common Label Typography (Used in Preview and Print) */
+        .lbl-name { font-size: 16pt; font-weight: 900; line-height: 1.1; color: #000; white-space: nowrap; overflow: hidden; }
+        .lbl-reg { font-size: 11pt; font-weight: bold; margin-top: 1mm; }
+        .lbl-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; }
+        .lbl-meta { font-size: 8pt; font-family: monospace; }
+        .lbl-ward { font-size: 10pt; font-weight: bold; border: 1px solid #000; padding: 0 3px; }
+        .lbl-test { font-size: 9pt; font-weight: bold; margin-top: 1mm; font-style: italic; }
+
     </style>
 </head>
 <body>
 
-    <div class="no-print">
-        <h2>Label Details</h2>
-        
-        <label>Name:</label>
-        <input type="text" id="pName" placeholder="Patient Name" oninput="updateLabel()">
-        
-        <label>REG No:</label>
-        <input type="text" id="pReg" placeholder="Registration No" oninput="updateLabel()">
-        
-        <label>Date:</label>
-        <input type="text" id="pDate" oninput="updateLabel()">
-        
-        <label>Time:</label>
-        <input type="text" id="pTime" oninput="updateLabel()">
+    <div class="app-container">
+        <h2>🏥 MediLabel Pro</h2>
 
-        <button onclick="window.print()">PRINT LABEL</button>
-
-        <div style="margin-top:20px; font-size: 12px; color: #666;">
-            Preview (approximate):
+        <div class="input-group">
+            <label>Patient Name</label>
+            <input type="text" id="pName" placeholder="e.g. Mrs. Izzadeen" oninput="updateState()">
         </div>
-        <div id="preview-container">
-            <div style="font-size: 10px; font-weight: bold; font-family: Arial;">
-                <div id="prevName">Mrs. Name Here</div>
-                <div id="prevReg">Reg: 123456789</div>
-                <div style="display: flex; justify-content: space-between; width: 45mm; margin-top:2px;">
-                    <span id="prevDate">29/01</span>
-                    <span id="prevTime">10:30</span>
+
+        <div class="input-group">
+            <label>Registration No (BHT)</label>
+            <input type="text" id="pReg" placeholder="e.g. 250724304" oninput="updateState()">
+        </div>
+
+        <div class="checkbox-wrapper" onclick="toggleCheckbox('chkWard')">
+            <input type="checkbox" id="chkWard" onchange="updateState()">
+            <span>Include "Ward 4C"</span>
+        </div>
+
+        <div class="checkbox-wrapper" onclick="toggleCheckbox('chkTest')">
+            <input type="checkbox" id="chkTest" onchange="toggleTestField()">
+            <span>Include Test Name</span>
+        </div>
+        
+        <div class="input-group" id="testFieldGroup" style="display:none;">
+            <input type="text" id="pTest" placeholder="Enter Test Name (e.g. FBC)" oninput="updateState()">
+        </div>
+
+        <div class="input-group" style="display: flex; gap: 10px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label>Copies</label>
+                <input type="number" id="pCopies" value="1" min="1" max="50">
+            </div>
+            <div style="flex: 1;">
+                 <label style="font-size: 11px; color: #d63031;">Prints Sideways?</label>
+                <div class="checkbox-wrapper" style="padding: 5px; margin: 0; background: #ffeaea;">
+                    <input type="checkbox" id="chkRotate">
+                    <span style="font-size: 12px;">Fix Rotation</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="label-area" style="display:none;">
-        <div id="outName">Mrs. Name Here</div>
-        <div id="outReg">Reg: 123456789</div>
-        <div style="margin-top: 3px;">
-            <span id="outDate">29/01</span>
-            <span style="float: right; margin-right: 4mm;" id="outTime">10:30</span>
+        <button class="btn-print" onclick="preparePrint()">PRINT LABELS</button>
+
+        <div class="preview-box">
+            <label>Preview</label>
+            <div class="preview-label" id="previewCanvas">
+                </div>
         </div>
     </div>
 
+    <div id="print-queue" style="display:none;"></div>
+
     <script>
-        // Auto-fill Date and Time
+        // Set Default Date
         const now = new Date();
         const dateStr = now.getDate().toString().padStart(2, '0') + '/' + (now.getMonth()+1).toString().padStart(2, '0');
-        const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
         
-        document.getElementById('pDate').value = dateStr;
-        document.getElementById('pTime').value = timeStr;
-
-        // Sync inputs to print area
-        function updateLabel() {
-            // Update Print Area
-            document.getElementById('outName').innerText = document.getElementById('pName').value;
-            document.getElementById('outReg').innerText = "Reg: " + document.getElementById('pReg').value;
-            document.getElementById('outDate').innerText = document.getElementById('pDate').value;
-            document.getElementById('outTime').innerText = document.getElementById('pTime').value;
-
-            // Update Preview Area
-            document.getElementById('prevName').innerText = document.getElementById('pName').value;
-            document.getElementById('prevReg').innerText = "Reg: " + document.getElementById('pReg').value;
-            document.getElementById('prevDate').innerText = document.getElementById('pDate').value;
-            document.getElementById('prevTime').innerText = document.getElementById('pTime').value;
+        // Helper to toggle checkbox by clicking the div
+        function toggleCheckbox(id) {
+            const el = document.getElementById(id);
+            // prevent double toggle if clicking actual box
+            if (event.target !== el) {
+                el.checked = !el.checked;
+                if(id === 'chkTest') toggleTestField();
+                updateState();
+            }
         }
 
-        // Make the print area visible only when printing
-        window.onbeforeprint = function() {
-            document.getElementById('label-area').style.display = 'block';
-        };
-        window.onafterprint = function() {
-            document.getElementById('label-area').style.display = 'none';
-        };
+        function toggleTestField() {
+            const isChecked = document.getElementById('chkTest').checked;
+            document.getElementById('testFieldGroup').style.display = isChecked ? 'block' : 'none';
+            updateState();
+        }
 
-        updateLabel();
+        // Generate the HTML for a single label
+        function getLabelHTML(name, reg, ward, test, isRotate) {
+            const rotateClass = isRotate ? 'force-rotate' : '';
+            
+            let html = `
+                <div class="lbl-name">${name || 'Patient Name'}</div>
+                <div class="lbl-reg">Reg: ${reg || '---'}</div>
+            `;
+
+            if (test) {
+                html += `<div class="lbl-test">${test}</div>`;
+            }
+
+            html += `<div class="lbl-row">
+                        <div class="lbl-meta">${dateStr}</div>`;
+            
+            if (ward) {
+                html += `<div class="lbl-ward">Ward 4C</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        function updateState() {
+            const name = document.getElementById('pName').value;
+            const reg = document.getElementById('pReg').value;
+            const showWard = document.getElementById('chkWard').checked;
+            const showTest = document.getElementById('chkTest').checked;
+            const testName = showTest ? document.getElementById('pTest').value : null;
+
+            // Update Preview
+            const canvas = document.getElementById('previewCanvas');
+            canvas.innerHTML = getLabelHTML(name, reg, showWard, testName, false);
+        }
+
+        function preparePrint() {
+            const name = document.getElementById('pName').value;
+            const reg = document.getElementById('pReg').value;
+            const showWard = document.getElementById('chkWard').checked;
+            const showTest = document.getElementById('chkTest').checked;
+            const testName = showTest ? document.getElementById('pTest').value : null;
+            const copies = parseInt(document.getElementById('pCopies').value) || 1;
+            const needsRotation = document.getElementById('chkRotate').checked;
+
+            const queue = document.getElementById('print-queue');
+            queue.innerHTML = ''; // Clear previous
+
+            // Create N copies of the label
+            for (let i = 0; i < copies; i++) {
+                const sticker = document.createElement('div');
+                sticker.className = 'print-sticker';
+                if (needsRotation) sticker.classList.add('force-rotate');
+                sticker.innerHTML = getLabelHTML(name, reg, showWard, testName, needsRotation);
+                queue.appendChild(sticker);
+            }
+
+            window.print();
+        }
+
+        // Init
+        updateState();
     </script>
 </body>
 </html>
